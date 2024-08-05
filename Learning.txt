@@ -1,0 +1,264 @@
+@for
+In angular 17 new @for syntax was introduced
+New options of the same are
+@empty {} - which allows you to display text or any thing in case the list is empty
+@index - provides the index of element in the array
+$count - the nuber of elements in the iterable
+$first - identifies first element of array   ------
+$last - identifies the last element of array        |
+$even - if index is even                            | used for styling
+$odd - if index is odd                       ------ |
+
+track function : helps angular to optiize the way in which he dom gets rendered. In case a new element is added to the list the whole list will not get re-rendered only the new elem will get added. or in case if there is any update in existimg angular compare the new and old version of the list and identifies what change is there and will update only thing that has changed.
+it is mandatory with @for with version 17 which helps in performance
+
+----------------------------------
+
+@if
+conditional rendering - can be implemented using @if
+@if(condition) {}
+@else if(condition)
+@else {}
+
+---------------------
+
+Built in Pipes:
+uppercase, lowercase, currency, slice, titlecase, json, date, decimal, keyvalue
+
+-----------------------------
+Template Querrying
+View Child & View Children Decorator
+Template Reference: #refName - interaction between different elems of components by simply using template reference
+and accessing the elem directly in the template. Sometimes our components need reference to the elem, so for this we perform template query at the level of components
+@viewChild(Component) card: Component;
+
+we can also query on the basis of templateRef
+@viewChild('templateRef') card: Component;
+In case u want to get reference of the HTML elem and not the component, this can be done using
+@viewChild('templateRef', {read: ElementRef}) card: ElementRef;
+
+we can also inject plain HTML elems
+<div #container></div>
+@viewChild('container') elem: EelementRef;
+this will provide the nativeElem
+
+When are these references initialized?
+for this we need AfterViewInit
+ngAfterViewInit() {}: this is when the instances of the values refered using ViewChild are initialized
+
+avoid any data modification in this lifecycle. 
+Angular's unidirectional data flow rule forbids updates to the view after it has been composed. Both of these hooks fire after the component's view has been composed.
+Angular throws an error if the hook updates the component's data-bound comment property immediately.
+
+Scope of the Template Queries
+The scope of the View Child Querying is restricted to the cmomponent itself, we cannot do a deep Querrying
+
+ViewChildren Decorator
+It allows us to querry a collection of same elems
+for eg in case of ngFor
+
+@viewChildren(Component) cards: QueryList<Component>;
+this will return QueryList which has a list of properties
+
+it also has changes observable: it will emit multiple value over time if there is some modification to the QueryList
+
+---------------------------------------------
+
+Content Projection
+it is all about making configurable components
+it can be done using <ng-content>
+ParentComponent
+<div>
+    <child>
+        <div>The data is from parent</div>
+    </child>
+</div>
+
+ChildComponent
+<div>
+    <p>it is child</p>
+    <ng-content>
+        any content written in parent component but inside
+        content part of the component
+    </ng-content>    
+</div>
+
+For partial Projection
+we can use select property
+
+it can be done using the element tag  
+<div>
+    <p>it is child</p>
+    <ng-content select="img">
+        any content written in parent component but inside
+        content part of the component
+    </ng-content>    
+</div>
+
+using a css class
+
+<div>
+    <child class="course-image">
+        <div>The data is from parent</div>
+    </child>
+</div>
+
+<div>
+    <p>it is child</p>
+    <ng-content select=".course-image">
+        any content written in parent component but inside
+        content part of the component
+    </ng-content>    
+</div>
+
+
+multi-slot Projection: can be done using "select"
+
+ContentChild: 
+When the child wants to get reference of the content that is being projected
+it cannot be done by creating a templateRef & ViewChild
+
+@ContentChild('templateRef')
+Scope of this is restricted to what is present inside ng-content
+
+@ContentChildren: queris collection of elemets or components
+
+AfterContentInit & ngAfterContentInit: content queries are executed here
+
+--------------------------
+
+<ng-template>: It can be used in case of *ngIf="condition; else blankImage"
+
+<ng-template #blankImage>
+    <div>Content</div
+</ng-template>
+
+if the templateRef does not exist in the component then the content inside ng-template is not rendered
+the ng-template can use the variables of the template in which it is embeded
+
+Give ng-template its won private variable context which is only accessible within it
+
+Characteristics: 
+we can define a template in one component & pass it as input to another components by filling in the context of the template as we need
+
+<ng-template #templateRef let-variableName="description">{{variableName}}</ng-template>
+
+Now instantiate the ng-template : this can be done using ngTemplateOutlet structural directive
+
+<ng-container *ngTemplateOutlet="templateRef; context: {description: data}">
+
+</ng-container>
+
+So basically the variable declared in the ng-template will get it's value from the context object defined in the ngOutletDirective
+for eg the variableName will get the value of description mentioned in the contect object
+
+Now we will pass the ng-template as an Input, this can be done by passing in the templateRef as the value to the input property
+
+<component [inputPropName] = "templateRef"/>
+
+@Input inputPropName: TemplateRef<any>;
+
+<ng-container *ngTemplateOutlet="inputPropName; context:{description:data}"></ng-container>
+
+------------------------------------------
+
+Angular Directives
+
+* Components are directives with template
+* structural directive: ngIf, ngFor, ngSwitch, they modify the beahviour of the element
+* attribute directives: modify the behaviour and apparance of the element
+
+Custom Attribute Directives
+A directive is always applied to a host element in other words the component to which the directive is applied is known as the host element
+ 
+Host Binding Decorator: allows to modify dom properties or add dom attributes of elem on which directive is applied
+
+@HostBinding('className'): className is the dom property that needs to be modified
+get  cssClasses() {: for this annotation to work we need to apply a getter method that's why the use of get
+    return "highlighted"
+}
+
+We can also pass input property and bind a expression to the same as
+<div [highlihted] = "true">
+
+@Input('highlighted)
+isHighLighted: boolean = false;
+@HostBinding('class.highlighted')
+get cssClasses() {
+    return this.isHighLighted;
+}
+
+@HostListener: interaction with native dom events
+
+@HostListener("dom-evnt") // ("mouseover")
+mouseOver() {
+    this.isHighLighted = true;
+}
+
+Directives can also emit custom events
+@Output
+toggleHighlight = new EventEmitter();
+
+@HostListener("dom-evnt") // ("mouseover")
+mouseOver() {
+    this.isHighLighted = true;
+    this.toggleHighlight.emit();
+}
+
+ExportAs: when the directive exposes some properties or methods which can be used by the component template or component class on which the directive is used
+for this we need a reference to this drective and that is where exportas functionality comes into play
+
+
+@Directive({
+    selector:'[highlighted]
+    exportAs: 'hl'
+})
+now it can be used by creating a template ref and assigning the exportAs value to it
+
+<component highlighted #highlighter="hl">
+
+highlighter.method()
+
+and for accessing the instance in class it can be done via ViewChild decorator
+
+
+Structural Directive: allows to add or remove elements from the template
+
+Angular desugars the *syntax and will implicitly create an ng-template tag and will add the content of the dom with ngIf directive inside the ng-template
+and then the ngIf directive is applied as an attribute directive on the ng-template
+
+----------------
+
+View Encapsulation
+https://blog.angular-university.io/angular-host-context/
+
+The styles are encapsulate and are only visible to the component.
+
+How this works?
+angular adds [_ngcontent-] special attributes to each element in the dom of the component when its instantiated, this keeps the style encapsulated to those components only
+
+Host Selector: is a special selector, allows us to target the host elem of comp itself that means it is used to targe the comp itself<comp>. At runtime the host styles are applied using ng-host-c0,c1 etc identifier that uniquely identifies the component/elem
+
+NgDeep
+way of bypassing the angular view encapsulation mechanism, whenever ng-deep is applied to style that part of css selector after ng-deep is no longer specific to the component template.
+when we want to style elems which are recieved via content Projection
+
+Host Context Selector
+based on theming we would want to add some css to the component, and the class is written in component css wherease the component is used from a parent
+
+parent
+<div class="theme">
+<child-comp>
+</div>
+
+child-comp.css
+:host-context(.theme) .child-comp-class
+
+Types of View Encapsulation
+1.) Emulated: default in angular 
+2.) None: it removes all the encapsulation attributes.it bundles all styles in all components to a global styles without making styles specific to the component
+3.) ShadowDom: it does encapsuation similar to default but uses browser provided native functionality instead of the unique attributes created by angular. All the HTML content is added inside the shadow-root and the styles are made specific to that shadow-root
+
+-------------------------------------------
+
+
